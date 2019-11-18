@@ -1,0 +1,14 @@
+.jumbotron {
+    background-color: #8b4504; 
+    color: #ffffff;
+}
+
+.card-header,
+.btn {
+    background-color: #0e589ce1;
+    color: #ffffff;
+}
+
+.btn {
+    float: left;
+}
