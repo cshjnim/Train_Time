@@ -5,12 +5,6 @@ var traFre = "";
 var nextTrain = "";
 var tMinutesTillTrain = "";
 
-// jQuery global variables
-var elTrain = $("#train-name-input");
-var elTrainDestination = $("#destination-input");
-// form validation for Time using jQuery Mask plugin
-var elTrainTime = $("#time-input").mask("00:00");
-var elTimeFreq = $("#fre-input").mask("00");
 
 var firebaseConfig = {
     apiKey: "AIzaSyAXmM3HuZeoMyp5IZFsUqCurdFncuFhbDQ",
@@ -35,7 +29,7 @@ $("#add-train-btn").on("click", function(event) {
     var traName = $("#train-name-input").val().trim();
     var traDest = $("#destination-input").val().trim();
     var traFre = $("#fre-input").val().trim();
-    var traTime = moment($("#time-input").val().trim(), "HH:mm").format("X");
+    var traTime = moment($("#time-input").val().trim(), "hh:mm").format("X");
 
     // Creates local "temporary" object for holding data
     var newTra = {
@@ -62,58 +56,51 @@ $("#add-train-btn").on("click", function(event) {
     $("#time-input").val("");
 });
 
+database.ref().on("child_added", function(snapshot) {
 
-database.ref().on("child_added", function(childSnapshot){
-    console.log(childSnapshot.val());
-    var traName = childSnapshot.val().name;
-    var traDest = childSnapshot.val().destination;
-    var traFre = childSnapshot.val().frequency;
-    var traTime = childSnapshot.val().time;
-  
-    console.log(traName);
-    console.log(traDest);
-    console.log(traFre);
-    console.log(traTime);
-  
-   
-    var tFrequency = 3;
+    //  create local variables to store the data from firebase
+    var trainDiff = 0;
+    var trainRemainder = 0;
+    var minutesTillArrival = "";
+    var nextTrainTime = "";
+    var frequency = snapshot.val().frequency;
 
-    // Time is 3:30 AM
-    var firstTime = "03:30";
+    // Moment to get train time difference 
+    trainDiff = moment().diff(moment.unix(snapshot.val().time), "minutes");
 
-    // First Time (pushed back 1 year to make sure it comes before current time)
-    var firstTimeConverted = moment(firstTime, "HH:mm").subtract(1, "years");
-    console.log(firstTimeConverted);
+    // get the remainder of time by using 'moderator' with the frequency & time difference
+    trainRemainder = trainDiff % frequency;
 
-    // Current Time
-    var currentTime = moment();
-    console.log("CURRENT TIME: " + moment(currentTime).format("hh:mm"));
+    // do some calculation
+    minutesTillArrival = frequency - trainRemainder;
 
-    // Difference between the times
-    var diffTime = moment().diff(moment(firstTimeConverted), "minutes");
-    console.log("DIFFERENCE IN TIME: " + diffTime);
+    // add minutesTillArrival to now, to find next train & convert to standard time format
+    nextTrainTime = moment().add(minutesTillArrival, "m").format("hh:mm A");
 
-    // Time apart (remainder)
-    var tRemainder = diffTime % tFrequency;
-    console.log(tRemainder);
-
-    // Minute Until Train
-    var tMinutesTillTrain = tFrequency - tRemainder;
-    console.log("MINUTES TILL TRAIN: " + tMinutesTillTrain);
-
-    // Next Train
-    var nextTrain = moment().add(tMinutesTillTrain, "minutes");
-    console.log("ARRIVAL TIME: " + moment(nextTrain).format("hh:mm"));
-  
-    // Create the new row
-    var newRow = $("<tr>").append(
-      $("<td>").text(traName),
-      $("<td>").text(traDest),
-      $("<td>").text(traFre),
-      $("<td>").text(nextTrain),
-      $("<td>").text(tMinutesTillTrain)
+    // append to our table of trains
+    $("#table-data").append(
+        "<tr><td>" + snapshot.val().name + "</td>" +
+        "<td>" + snapshot.val().destination + "</td>" +
+        "<td>" + frequency + "</td>" +
+        "<td>" + minutesTillArrival + "</td>" +
+        "<td>" + nextTrainTime + "  "  + "</td></tr>"
     );
-  
-    // Append the new row to the table
-    $("#train-table > tbody").append(newRow);
-  });
+
+    $("span").hide();
+
+    // Hover view first
+    $("tr").hover(
+        function() {
+            $(this).find("span").show();
+        },
+        function() {
+            $(this).find("span").hide();
+        });
+
+    // BONUS: CREAT TO REMOVE ITEMS
+    $("#table-data").on("click", "tr span", function() {
+        console.log(this);
+        var trainRef = database.ref();
+        console.log(trainRef);
+    });
+});
