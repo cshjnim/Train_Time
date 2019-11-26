@@ -97,10 +97,17 @@ database.ref().on("child_added", function(snapshot) {
             $(this).find("span").hide();
         });
 
-    // BONUS: CREAT TO REMOVE ITEMS
-    $("#table-data").on("click", "tr span", function() {
+    // BONUS: CREATE TO REMOVE ITEMS
+    $("#table-data").on("click", "tr", function() {
         console.log(this);
         var trainRef = database.ref();
         console.log(trainRef);
+        $("tbody").append("<button class='delBtn'>" + "click me" + "</button>");
+        });
     });
-});
+    $("#table-data").on("click", "button", function() {
+        $(this).closest("tr").remove();
+        $(this).closest('button').remove();
+        return false;
+    });
+  
